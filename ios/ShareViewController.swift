@@ -1,167 +1,14 @@
----
-sidebar_position: 3
----
-
-# IOS
-
-`<project_folder>/ios/<project_name>/info.plist`
-
-```xml
-<plist version="1.0">
-<dict>
-  
-  .....
-
-<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>ShareMedia</string> <!-- share url protocol (must be unique to your app, suggest using your apple bundle id) -->
-			</array>
-		</dict>
-		<dict/>
-	</array>
-
-<key>NSPhotoLibraryUsageDescription</key>
-  <string>
-      To upload photos, please allow permission to access your photo library.
-  </string>
-  
-  ....
-  
-</dict>
-</plist>  
-```
-
-`<project_folder>/ios/<project_name>/AppDelegate.m`
-
-```objectivec
-....
-
-#import <React/RCTLinkingManager.h> // Add this Line in Header of file
-
-....
-@implementation AppDelegate
-
-...
-
-- (BOOL)application:(UIApplication *)application
-            openURL:(NSURL *)url
-            options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
-{
-  return [RCTLinkingManager application:application openURL:url options:options];
-}
-
-@end
-
-```
-
-`<project_folder>/ios/<your project name>/<your project name>.entitlements`
-
-```xml
-
-....
-    <!--TODO:  Add this tag, if you want support opening urls into your app-->
-    <key>com.apple.developer.associated-domains</key>
-    <array>
-        <string>applinks:example.com</string>
-    </array>
-....
-
-```
-
-
-##  Create Share Extension
-
-
-
-
-
-
-
-
-
-
-
-
-  - Using xcode, go to File/New/Target and Choose "Share Extension"
-  - Give it a name you want to show on while Sharing i.e. i Choose "Example Share"
-
-:::info
-
-Please Change Share Extension Target deployment version to Same as Main Project Target deployment version
-
-:::
-
- 
-  `<project_folder>/ios/<Your Share Extension Name>/info.plist` 
-  
-  ```xml
-<plist version="1.0">
-<dict>
-...
-    <key>NSExtension</key>
-    <dict>
-      <key>NSExtensionAttributes</key>
-          <dict>
-              <key>PHSupportedMediaTypes</key>
-                 <array>
-                      <!--TODO: Add this flag, if you want to support sharing video into your app-->
-                     <string>Video</string>
-                     <!--TODO: Add this flag, if you want to support sharing images into your app-->
-                     <string>Image</string>
-                 </array>
-              <key>NSExtensionActivationRule</key>
-              <dict>
-                  <!--TODO: Add this flag, if you want to support sharing text into your app-->
-                  <key>NSExtensionActivationSupportsText</key>
-                  <true/>
-                  <!--TODO: Add this tag, if you want to support sharing urls into your app-->
-                <key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
-                <integer>1</integer>
-                <!--TODO: Add this flag, if you want to support sharing images into your app-->
-                  <key>NSExtensionActivationSupportsImageWithMaxCount</key>
-                  <integer>100</integer>
-                  <!--TODO: Add this flag, if you want to support sharing video into your app-->
-                  <key>NSExtensionActivationSupportsMovieWithMaxCount</key>
-                  <integer>100</integer>
-                  <!--TODO: Add this flag, if you want to support sharing other files into your app-->
-                  <!--Change the integer to however many files you want to be able to share at a time-->
-                  <key>NSExtensionActivationSupportsFileWithMaxCount</key>
-                  <integer>100</integer>
-              </dict>
-          </dict>
-      <key>NSExtensionMainStoryboard</key>
-      <string>MainInterface</string>
-      <key>NSExtensionPointIdentifier</key>
-      <string>com.apple.share-services</string>
-    </dict>
-  
- </dict>
-</plist>
-
-```
-
-`<project_folder>/ios/<Your Share Extension Name>/ShareViewController.swift`
- - <b> Note: Important </b> change the `hostAppBundleIdentifier` value to your main host app bundle identifier (example in my case: `com.rnreceivesharingintent` ) in this `ShareViewController.swift` 
-
-
-
- ```swift
-
-
 import UIKit
 import Social
 import MobileCoreServices
 import Photos
 
+// https://github.com/ajith-ab/react-native-receive-sharing-intent/issues/185#issuecomment-2407291651
 @available(iOSApplicationExtension, unavailable)
 class ShareViewController: SLComposeServiceViewController {
- let hostAppBundleIdentifier = "com.joturl.app"
- let shareProtocol = "joturlmobileapp" //share url protocol (must be unique to your app, suggest using your apple bundle id, ie: `hostAppBundleIdentifier`)
+ // TODO: IMPORTANT: This should be your host app bundle identifier
+ let hostAppBundleIdentifier = "com.rnreceivesharingintent"
+ let shareProtocol = "ShareMedia" //share url protocol (must be unique to your app, suggest using your apple bundle id, ie: `hostAppBundleIdentifier`)
  let sharedKey = "ShareKey"
  var sharedMedia: [SharedMediaFile] = []
  var sharedText: [String] = []
@@ -169,7 +16,7 @@ class ShareViewController: SLComposeServiceViewController {
  let videoContentType = kUTTypeMovie as String
  let textContentType = kUTTypeText as String
  let urlContentType = kUTTypeURL as String
- let fileURLType = kUTTypeFileURL as String;
+ let fileURLType = kUTTypeFileURL as String
  
  override func isContentValid() -> Bool {
    return true
@@ -356,20 +203,18 @@ class ShareViewController: SLComposeServiceViewController {
    extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
  }
  
-  // Update this function
-  private func redirectToHostApp(type: RedirectType) {
-     guard let url = URL(string: "\(shareProtocol)://dataUrl=\(sharedKey)#\(type)") else {
-        dismissWithError()
-        return //be safe
-     }
-
-     UIApplication.shared.open(url, options: [:], completionHandler: completeRequest)
+ private func redirectToHostApp(type: RedirectType) {
+   guard let url = URL(string: "\(shareProtocol)://dataUrl=\(sharedKey)#\(type)") else {
+      dismissWithError()
+      return //be safe
    }
 
-  // Add this funcion
-  func completeRequest(success: Bool) {
-      extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
-    }
+   UIApplication.shared.open(url, options: [:], completionHandler: completeRequest)
+ }
+
+func completeRequest(success: Bool) {
+    extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
+  }
  
  enum RedirectType {
    case media
@@ -491,41 +336,3 @@ extension Array {
    return Int(index) < count ? self[Int(index)] : nil
  }
 }
-
-
- ```
-
-## Create App Group
-
-- Go to the Capabilities tab and switch on the App Groups switch for both targets. Add a new group and name it group.YOUR_HOST_APP_BUNDLE_IDENTIFIER in my case group.com.rnreceivesharinginten
-
-- App group name must be start with `group.`
-
-1. Create a app group for main App
-
-![group text](https://raw.githubusercontent.com/ajith-ab/react-native-receive-sharing-intent/master/doc/app%20group2.png)
-
-2. Create a app group for Share Extension
-
-![group text](https://raw.githubusercontent.com/ajith-ab/react-native-receive-sharing-intent/master/doc/app%20group1.png)
-
-
-
-## Compiling issues and their fixes
-  - Error: App does not build after adding Share Extension?
-
-    Fix: Check Build Settings of your share extension and remove everything that tries to import Cocoapods from your main project. i.e. remove everything under Linking/Other Linker Flags
-
- - You might need to disable bitcode for the extension target
-
- - <a href="https://github.com/facebookarchive/react-native-fbsdk/issues/794" >ERROR RUNNING ON XCODE 12</a>
-  - <a href="https://khushwanttanwar.medium.com/xcode-12-compilation-errors-while-running-with-ios-14-simulators-5731c91326e9" >Xcode 12 Compilation Errors (While running with iOS 14 Simulators)</a>
-
-
-
-
-
-
-
-
-    
