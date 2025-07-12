@@ -9,7 +9,7 @@
     "ios": "10.0"
   },
   "source": {
-    "git": "https://github.com/ajith-ab/react-native-receive-sharing-intent.git",
+    "git": "https://github.com/Zerlight/react-native-receive-sharing-intent.git",
     "tag": "0.1.0"
   },
   "source_files": "ios/**/*.{h,m,mm,swift}",

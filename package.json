@@ -36,7 +36,7 @@
     "ios",
     "android"
   ],
-  "repository": "https://github.com/ajith-ab/react-native-receive-sharing-intent",
+  "repository": "https://github.com/Zerlight/react-native-receive-sharing-intent",
   "author": "Ajith A B <ajith4ab@gmail.com> (https://github.com/ajith-ab)",
   "license": "MIT",
   "bugs": {
